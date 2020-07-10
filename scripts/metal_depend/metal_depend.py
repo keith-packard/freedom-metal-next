@@ -64,7 +64,7 @@ def get_template(parsed_args):
     return template
 
 
-METAL_DIRS = ('src', 'src/drivers')
+METAL_DIRS = ('src', 'src/drivers', 'sifive-blocks/src', 'sifive-blocks/src/drivers')
 
 HELPERS_C = (
     ("uart0", ["uart.c"]),

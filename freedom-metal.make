@@ -17,7 +17,7 @@ include metal.mk
 
 SOURCE ?= .
 
-SOURCE_VPATH ?= $(SOURCE)
+SOURCE_VPATH ?= $(SOURCE):$(SOURCE)/src
 
 vpath %.c $(SOURCE_VPATH):$(METAL_HELPER_VPATH):$(TARGET_C_VPATH)
 vpath %.S $(SOURCE_VPATH):$(METAL_HELPER_VPATH):$(TARGET_S_VPATH)
@@ -28,17 +28,17 @@ LDFLAGS = -nostartfiles -T$(LDSCRIPT)
 
 ABIFLAGS = $(METAL_CFLAGS) -msave-restore
 
-INCFLAGS = -I. -I$(FREEDOM_METAL)
+INCFLAGS = -I. -I$(FREEDOM_METAL) -I$(FREEDOM_METAL)/sifive-blocks
 
 OPT ?= -Os -g
 
-CFLAGS = --specs=$(RISCV_LIBC).specs -fno-common -ffunction-sections -fdata-sections $(OPT) $(ABIFLAGS) $(INCFLAGS) $(LDFLAGS) $(SOURCE_CFLAGS) $(FEATURE_DEFINES)
+CFLAGS = -DMTIME_RATE_HZ_DEF=32768 --specs=$(RISCV_LIBC).specs -fno-common -ffunction-sections -fdata-sections $(OPT) $(ABIFLAGS) $(INCFLAGS) $(LDFLAGS) $(SOURCE_CFLAGS) $(FEATURE_DEFINES)
 LIBS = $(SOURCE_LIBS)
 
-SRC_C += $(METAL_HELPER_C) $(TARGET_C)
-SRC_S += $(METAL_HELPER_S) $(TARGET_S)
+SRC_C += $(METAL_HELPER_C) $(TARGET_C) $(wildcard src/*.c)
+SRC_S += $(METAL_HELPER_S) $(TARGET_S) $(wildcard src/*.S)
 OBJ = $(notdir $(SRC_C:.c=.o)) $(notdir $(SRC_S:.S=.o))
-GEN_HDR = metal/machine.h metal/machine/platform.h metal/machine/inline.h metal/machine-inline.h
+#GEN_HDR = metal/machine.h metal/machine/platform.h metal/machine/inline.h metal/machine-inline.h
 HDR = $(wildcard *.h) $(GEN_HDR)
 
 ifndef quiet
@@ -69,3 +69,6 @@ clean::
 
 echo::
 	echo $(OBJ)
+
+generate:
+	make -C $(FREEDOM_METAL) generate OUTPUT_DIR=$(abspath .) DEVICETREE=$(abspath $(DEVICETREE))

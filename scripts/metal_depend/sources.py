@@ -27,7 +27,7 @@ EXTENSIONS = ('.c', '.S')
 
 def make_filename(compatible):
     """Convert a compatible value into a freedom-metal style filename"""
-    return compatible.replace(',', '_')
+    return compatible.replace(',', '_').replace('-', '_')
 
 def find_source(basename, dirs):
     """Locate the named file in one of the listed directories"""
@@ -40,6 +40,7 @@ def find_source(basename, dirs):
 def find_paths(compat, dirs):
     """Given a compatible string, find matching files"""
     file = make_filename(compat)
+    print('compat %s -> file %s' % (compat, file))
     for ext in EXTENSIONS:
         path = find_source(file + ext, dirs)
         if path:
@@ -69,8 +70,10 @@ def get_sources(tree, dirs):
             for device_type in device_types:
                 if device_type is not None:
                     compat += '_' + device_type
+                print('compat %s' % compat)
                 paths = find_paths(compat, dirs)
                 for path in paths:
+                    print('    path %s' % path)
                     if path not in sources_c and path not in sources_s:
                         if path.endswith('.c'):
                             sources_c += [path]
