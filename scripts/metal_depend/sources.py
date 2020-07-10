@@ -10,10 +10,10 @@ def has_compat(node) -> bool:
     """ Checks whether the given node has a "compatible" value"""
     return node.get_fields("compatible") is not None
 
-# Watchdog lives in AON block, but the driver is called wdog0
+# Watchdog and RTC live in AON block
 
 COMPATIBLE_MAP = {
-    "sifive,aon0": "sifive,wdog0",
+    "sifive,aon0": ("sifive,wdog0", "sifive,rtc0"),
 }
 
 def get_compatibles(tree):
@@ -26,8 +26,7 @@ def get_compatibles(tree):
 EXTENSIONS = ('.c', '.S')
 
 def make_filename(compatible):
-    """Convert a compatible value into a
-    freedom-metal style filename"""
+    """Convert a compatible value into a freedom-metal style filename"""
     return compatible.replace(',', '_')
 
 def find_source(basename, dirs):
@@ -38,17 +37,19 @@ def find_source(basename, dirs):
             return path
     return None
 
-def find_path(compat, dirs):
-    """Given a compatible string, find a matching file"""
+def find_paths(compat, dirs):
+    """Given a compatible string, find matching files"""
     file = make_filename(compat)
     for ext in EXTENSIONS:
         path = find_source(file + ext, dirs)
         if path:
-            return path
+            return [path]
     if compat in COMPATIBLE_MAP:
-        return find_path(COMPATIBLE_MAP[compat], dirs)
-    return None
-
+        paths = []
+        for p in COMPATIBLE_MAP[compat]:
+            paths += find_paths(p, dirs)
+        return paths
+    return []
 
 def get_sources(tree, dirs):
     """Given a Devicetree, get the list of source files available"""
@@ -64,16 +65,16 @@ def get_sources(tree, dirs):
             # pylint: disable=R1721
             # this comprehension converts device_types into a list
             device_types = [None] + [d for d in device_types]
-        path = None
         for compat in compatible.get_fields("compatible"):
             for device_type in device_types:
                 if device_type is not None:
                     compat += '_' + device_type
-                path = find_path(compat, dirs)
-                if path and path not in sources_c and path not in sources_s:
-                    if path.endswith('.c'):
-                        sources_c += [path]
-                    else:
-                        sources_s += [path]
+                paths = find_paths(compat, dirs)
+                for path in paths:
+                    if path not in sources_c and path not in sources_s:
+                        if path.endswith('.c'):
+                            sources_c += [path]
+                        else:
+                            sources_s += [path]
 
     return (sources_c, sources_s)

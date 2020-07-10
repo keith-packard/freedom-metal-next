@@ -73,6 +73,7 @@ _enter:
     csrr a0, mhartid
     li a1, 0
     li a2, 0
+#ifdef METAL_FEATURE_EXIT
     call _start
 
     /* If we've made it back here then there's probably something wrong.  We
@@ -90,6 +91,9 @@ _enter:
 1:
      lw t1, 0(x0)
      j 1b
+#else
+     j _start
+#endif
 
     .cfi_endproc
 

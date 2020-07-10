@@ -67,15 +67,16 @@ def get_template(parsed_args):
 METAL_DIRS = ('src', 'src/drivers')
 
 HELPERS_C = (
-    ("uart0", "uart.c"),
-    ("wdog0", "watchdog.c"),
-    ("clic0", "interrupt.c"),
-    ("plic0", "interrupt.c"),
-    ("clint0", "interrupt.c"),
-    ("gpio0", "gpio.c"),
+    ("uart0", ["uart.c"]),
+    ("wdog0", ["watchdog.c"]),
+    ("clic0", ["interrupt.c"]),
+    ("plic0", ["interrupt.c"]),
+    ("clint0", ["interrupt.c"]),
+    ("gpio0", ["gpio.c"]),
+    ("spi0", ["time.c", "spi.c"]),
     )
 
-METAL_C = ('init.c', 'synchronize_harts.c', 'inline.c', 'cpu.c', 'clock.c', 'timer.c')
+METAL_C = ('init.c', 'synchronize_harts.c', 'inline.c', 'cpu.c', 'clock.c', 'timer.c', 'shutdown.c')
 
 METAL_S = ('entry.S', 'trap.S', 'vector.S')
 
@@ -101,16 +102,10 @@ def find_paths(names, dirs):
 
 FEATURE_C = {
     "stdio": ['tty.c'],
-    "exit": ['shutdown.c'],
 }
 
-def find_features(feature_arg, dirs):
+def find_features(features, dirs):
     """Get the sources needed for the requested features"""
-
-    # Convert comma-separated argument into list
-    features = ()
-    if feature_arg:
-        features = feature_arg.split(',')
 
     feature_c = []
 
@@ -119,6 +114,10 @@ def find_features(feature_arg, dirs):
             feature_c += find_paths(FEATURE_C[feature], dirs)
 
     return feature_c
+
+def make_feature_defines(features):
+    """Create list of feature C defines from requested feature set"""
+    return ["-DMETAL_FEATURE_%s" % feature.upper() for feature in features]
 
 def main(argv):
     """Parse arguments, extract data, and render the linker script to file"""
@@ -141,13 +140,21 @@ def main(argv):
     for t_c in target_c:
         for helper_c in HELPERS_C:
             if helper_c[0] in t_c:
-                helpers_c += [helper_c[1]]
+                helpers_c += helper_c[1]
 
     target_c += find_paths(helpers_c, dirs)
 
     # Add sources to support requested features
 
-    target_c += find_features(parsed_args.features, dirs)
+    # Convert comma-separated argument into list
+    features = ()
+    if parsed_args.features:
+        features = parsed_args.features.split(',')
+
+    target_c += find_features(features, dirs)
+
+    # Get feature defines
+    feature_defines = make_feature_defines(features)
 
     # Add required metal sources
 
@@ -167,7 +174,8 @@ def main(argv):
         "target_c": target_c,
         "target_s": target_s,
         "target_c_dir": target_c_dir,
-        "target_s_dir": target_s_dir
+        "target_s_dir": target_s_dir,
+        "feature_defines": feature_defines,
     }
 
     if parsed_args.output:

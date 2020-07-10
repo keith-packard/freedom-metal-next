@@ -185,7 +185,10 @@ _skip_init:
   li a0, 1     /* argc=1 */
   la a1, argv  /* argv = {"libgloss", NULL} */
   la a2, envp  /* envp = {NULL} */
+#ifdef METAL_FEATURE_EXIT
   call secondary_main
+#else
+  j secondary_main	
 
   /* Call exit to handle libc's cleanup routines.  Under normal contains this
    * shouldn't even get called, but I'm still not using a tail call here
@@ -198,6 +201,7 @@ _skip_init:
    * point it's really the only thing left to do. */
   mv ra, s0
   ret
+#endif
 
 .cfi_endproc
 
@@ -233,6 +237,7 @@ secondary_main:
   wfi
   j 1b
 2:
+#ifdef METAL_FEATURE_EXIT
   call main
 #if __riscv_xlen == 32
   lw ra, 4(sp)
@@ -241,6 +246,9 @@ secondary_main:
 #endif
   addi sp, sp, 16
   ret
+#else
+  j main
+#endif	
 
 /* This shim allows main() to be passed a set of arguments that can satisfy the
  * requirements of the C API. */

@@ -24,7 +24,7 @@ vpath %.S $(SOURCE_VPATH):$(METAL_HELPER_VPATH):$(TARGET_S_VPATH)
 
 CC = riscv64-unknown-elf-gcc
 
-LDFLAGS = -nostartfiles -Wl,--gc-sections -T$(LDSCRIPT)
+LDFLAGS = -nostartfiles -T$(LDSCRIPT)
 
 ABIFLAGS = $(METAL_CFLAGS) -msave-restore
 
@@ -32,7 +32,7 @@ INCFLAGS = -I. -I$(FREEDOM_METAL)
 
 OPT ?= -Os -g
 
-CFLAGS = --specs=$(RISCV_LIBC).specs -ffunction-sections -fdata-sections $(OPT) $(ABIFLAGS) $(INCFLAGS) $(LDFLAGS) $(SOURCE_CFLAGS)
+CFLAGS = --specs=$(RISCV_LIBC).specs -fno-common -ffunction-sections -fdata-sections $(OPT) $(ABIFLAGS) $(INCFLAGS) $(LDFLAGS) $(SOURCE_CFLAGS) $(FEATURE_DEFINES)
 LIBS = $(SOURCE_LIBS)
 
 SRC_C += $(METAL_HELPER_C) $(TARGET_C)
