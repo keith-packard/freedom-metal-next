@@ -9,17 +9,15 @@ LDSCRIPT ?= metal.default.lds
 #METAL_HDR = metal/machine.h metal/machine/platform.h metal/machine/inline.h metal/machine-inline.h
 METAL_HDR = metal/machine/platform.h metal/machine/inline.h metal/machine-inline.h
 
-METAL_FILES = metal.mk $(METAL_HDR) $(LDSCRIPT)
+METAL_FILES = metal/metal.mk $(METAL_HDR) $(LDSCRIPT)
 
 ifneq ($(METAL_FEATURES),)
 METAL_FEATURES_FLAG=-f $(METAL_FEATURES)
 endif
 
-include $(BSP)/settings.mk
-
 METAL_CFLAGS=-march=$(RISCV_ARCH) -mabi=$(RISCV_ABI) -mcmodel=$(RISCV_CMODEL)
 
-metal.mk: $(DEVICETREE)
+metal/metal.mk: $(DEVICETREE)
 	python3 $(METAL_DEPEND) -o $@ -d $^ $(METAL_FEATURES_FLAG) -m $(FREEDOM_METAL)
 
 #metal/machine.h: metal design.dtb
